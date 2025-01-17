@@ -1,0 +1,24 @@
+graph TD
+    %% Hardware Layer
+    DHT11[DHT11] --> Arduino
+    LDR[LDR] --> Arduino
+    PIR[PIR] --> Arduino
+    Sound[Sound Sensor] --> Arduino
+    
+    %% Data Flow
+    Arduino -->|Serial Data| Python[Python Script]
+    Python -->|Parse & Store| MongoDB[(MongoDB)]
+    Python -->|Serve| Flask[Flask Server]
+    
+    %% Frontend
+    Flask -->|JSON| Browser[Web Browser]
+    MongoDB -->|Query| Flask
+    
+    %% Styling
+    classDef sensor fill:#a8d5e5
+    classDef processing fill:#95c8d8
+    classDef storage fill:#7b9cd5
+    
+    class DHT11,LDR,PIR,Sound sensor
+    class Arduino,Python,Flask processing
+    class MongoDB storage
