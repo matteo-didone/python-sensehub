@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.6.1/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-[#1a1b1e] min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-200 mb-6">Sensor Dashboard</h1>
+
+        <!-- Grid dei sensori -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Temperatura -->
+            <div class="card bg-[#25262b] shadow-xl">
+                <div class="card-body">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-gray-400">Temperature</h3>
+                            <p class="text-2xl font-bold mt-2" id="temperature">--°C</p>
+                        </div>
+                        <i data-lucide="thermometer" class="w-6 h-6 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Umidità -->
+            <div class="card bg-[#25262b] shadow-xl">
+                <div class="card-body">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-gray-400">Humidity</h3>
+                            <p class="text-2xl font-bold mt-2" id="humidity">--</p>
+                        </div>
+                        <i data-lucide="droplets" class="w-6 h-6 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Luce -->
+            <div class="card bg-[#25262b] shadow-xl">
+                <div class="card-body">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-gray-400">Light</h3>
+                            <p class="text-2xl font-bold mt-2" id="light">--</p>
+                        </div>
+                        <i data-lucide="sun" class="w-6 h-6 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suono -->
+            <div class="card bg-[#25262b] shadow-xl">
+                <div class="card-body">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-gray-400">Sound</h3>
+                            <p class="text-2xl font-bold mt-2" id="sound">--</p>
+                        </div>
+                        <i data-lucide="volume-2" class="w-6 h-6 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motion Sensor -->
+        <div class="card bg-[#25262b] shadow-xl mb-6">
+            <div class="card-body">
+                <div class="flex items-center gap-3">
+                    <div id="motion-indicator" class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div>
+                        <h3 class="text-gray-400">Motion Sensor</h3>
+                        <p class="text-xl" id="movement">No Motion</p>
+                    </div>
+                    <i data-lucide="activity" class="w-6 h-6 text-gray-400 ml-auto"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grafici -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Temperature History -->
+            <div class="card bg-[#25262b] shadow-xl">
+                <div class="card-body">
+                    <h3 class="text-gray-400">Temperature History</h3>
+                    <div class="h-40">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Humidity History -->
+            <div class="card bg-[#25262b] shadow-xl">
+                <div class="card-body">
+                    <h3 class="text-gray-400">Humidity History</h3>
+                    <div class="h-40">
+                        <canvas id="humidChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inizializza le icone Lucide
+        lucide.createIcons();
+
+        // Configurazione dei grafici
+        const createChart = (ctx, label, color) => {
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: label,
+                        data: [],
+                        borderColor: color,
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#9ca3af'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                maxRotation: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        };
+
+        // Inizializza i grafici
+        const tempChart = createChart(document.getElementById('tempChart'), 'Temperature', '#ef4444');
+        const humidChart = createChart(document.getElementById('humidChart'), 'Humidity', '#3b82f6');
+
+        // Funzione per aggiornare i dati
+        function updateSensorData() {
+            fetch('http://localhost:5000/api/data/current')
+                .then(response => response.json())
+                .then(data => {
+                    // Aggiorna i valori (senza percentuali)
+                    document.getElementById('temperature').textContent = `${data.temperature}°C`;
+                    document.getElementById('humidity').textContent = `${data.humidity}%`;
+                    document.getElementById('light').textContent = data.light;
+                    document.getElementById('sound').textContent = data.sound;
+
+                    // Aggiorna il motion sensor
+                    const motionIndicator = document.getElementById('motion-indicator');
+                    const movementText = document.getElementById('movement');
+                    if (data.movement) {
+                        motionIndicator.classList.replace('bg-red-500', 'bg-green-500');
+                        movementText.textContent = 'Motion Detected';
+                    } else {
+                        motionIndicator.classList.replace('bg-green-500', 'bg-red-500');
+                        movementText.textContent = 'No Motion';
+                    }
+
+                    // Aggiorna i grafici
+                    const now = new Date().toLocaleTimeString().split(' ')[0];
+
+                    // Aggiorna temperatura
+                    tempChart.data.labels.push(now);
+                    tempChart.data.datasets[0].data.push(data.temperature);
+                    if (tempChart.data.labels.length > 10) {
+                        tempChart.data.labels.shift();
+                        tempChart.data.datasets[0].data.shift();
+                    }
+                    tempChart.update();
+
+                    // Aggiorna umidità
+                    humidChart.data.labels.push(now);
+                    humidChart.data.datasets[0].data.push(data.humidity);
+                    if (humidChart.data.labels.length > 10) {
+                        humidChart.data.labels.shift();
+                        humidChart.data.datasets[0].data.shift();
+                    }
+                    humidChart.update();
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Aggiorna i dati ogni 2 secondi
+        setInterval(updateSensorData, 2000);
+
+        // Prima lettura immediata
+        updateSensorData();
+    </script>
+</body>
+
+</html>
