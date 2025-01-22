@@ -1,6 +1,12 @@
 # SenseHub
 
-SenseHub è un progetto IoT che integra hardware Arduino con un'interfaccia web per monitorare in tempo reale dati ambientali attraverso vari sensori.
+SenseHub è un progetto IoT che integra hardware Arduino con un'interfaccia web per monitorare in tempo reale dati ambientali attraverso vari sensori. 
+Il gruppo è formato da:
+-Didonè Matteo
+-Battistutta Davide
+-Vuaran Davide
+-Mio Roberto 
+-Burello Federico
 
 ## 📝 Descrizione
 
